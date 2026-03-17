@@ -6,7 +6,7 @@ import math
 # VARIABLES
 # -------------------------
 
-villagers_happy = random.randint(50, 79)
+villagers_happy = random.randint(60, 75)
 pygame.init()
 font = pygame.font.SysFont(None, 40)
 
@@ -50,10 +50,10 @@ def factories_money(NUM_FACTORIES, NUM_HOUSES, village_money):
     workers_needed = NUM_FACTORIES * 10
     if NUM_HOUSES < workers_needed:
         missing_workers = workers_needed - NUM_HOUSES
-        village_money += NUM_HOUSES // 10
+        village_money += (NUM_HOUSES // 10) + (NUM_FACTORIES//2)
         village_money -= missing_workers
     else:
-        village_money += int((NUM_FACTORIES*(1+(villagers_happy//100)))//1)
+        village_money += int(((NUM_FACTORIES * (1+(villagers_happy//100)))//1) + NUM_FACTORIES //2)
     return village_money
 
 def generate_map():
@@ -96,6 +96,24 @@ def draw_notifications():
             notif_text = font.render(text, True, (255, 255, 255))
             screen.blit(notif_text, (20, y_offset))
             y_offset += 30
+
+#--------------------------
+# CREATION DE DEUXIEME FENETRE
+#--------------------------
+
+def building_info():
+    building_info = Tk()
+    NUM_HOUSES_label = Label(building_info, text=f"nombre de maisons/hlm: {NUM_HOUSES}").pack()
+    NUM_FACTORIES_label = Label(building_info, text=f"nombre de factories: {NUM_FACTORIES}").pack()
+    
+    NUM_PARC_label = Label(building_info, text=f"nombre de parc: {NUM_PARC}").pack()
+    NUM_CIRCUS_label = Label(building_info, text=f"nombre de cirques: {NUM_CIRCUS}").pack()
+    NUM_RAF_label = Label(building_info, text=f"nombre de rafineries: {NUM_RAF}").pack()
+    NUM_BANK_label=Label(building_info, text=f"nombre de banques: {NUM_BANK}").pack()
+    building_info.mainloop
+
+
+
 
 # -------------------------
 # ACHATS
@@ -184,6 +202,9 @@ Button(window, text="Acheter parc $70", command=buy_parc).pack()
 Button(window, text= "Acheter Cirque $150", command=buy_circus).pack()
 Button(window,text="acheter une rafinerie $180", command=buy_raf).pack()
 Button(window, text="Acheter une baque $200", command=buy_bank).pack()
+
+Button(window, text="info sur les buildings", command=building_info).pack()
+
 # -------------------------
 # MAP INIT
 # -------------------------
@@ -219,11 +240,13 @@ while running:
             event_circus=event_circus+1
             event_bank=event_bank+1
             #faire un event ou on reçoit de l argent selon le nombre de personnes et leurs happiness mais apres leurs hapinness va desendre
+            
             if event_taxes==10:
                 village_money=village_money+(NUM_HOUSES//3)
                 villagers_happy=villagers_happy-3
                 event_taxes=0
                 add_notification("impots +", village_money)
+            
             if event_circus==5:
                 #event cirque
                 if villagers_happy < 100:
@@ -237,7 +260,7 @@ while running:
                 
                 if NUM_BANK > 0:
 
-                    oldvillage_money=(village_money + (200 + random.randint(-100,140)))
+                    oldvillage_money=(village_money + (200 + random.randint(-220,150)))*NUM_BANK
                     NUM_BANK=0
                     print("banque donnée argent")
                     print("votre balance va etre de + ",oldvillage_money - village_money)
@@ -257,27 +280,18 @@ while running:
     if village_money < 0:
         print("plus d argent")
         quit()
-
-
-
     # Dessin
     screen.fill((0,0,0))
     draw_map(pixel_map, houses + factories)
-
     # Texte argent et bonheur
     money_text = font.render(f"$ : {village_money}", True, (255,255,255))
     happiness_text = font.render(f":) : {villagers_happy}", True, (255,255,255))
     screen.blit(money_text, (WIDTH - 200, HEIGHT - 40))
     screen.blit(happiness_text, (WIDTH - 200, HEIGHT - 80))
-
     # Notifications
     draw_notifications()
-
     pygame.display.flip()
-
     # Update Tkinter
     window.update()
-
     clock.tick(60)
-
 pygame.quit()
