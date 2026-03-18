@@ -2,6 +2,7 @@ import pygame
 import random
 from tkinter import *
 import math
+
 # -------------------------
 # VARIABLES
 # -------------------------
@@ -29,17 +30,32 @@ NUM_RAF = 0
 NUM_BANK=0
 village_money = 0
 
-notifications = []  # liste pour notifications
+notifications = []
 
 # -------------------------
-# TKINTER (UNE SEULE FOIS)
+# TKINTER SCROLLABLE
 # -------------------------
 
 window = Tk()
 window.geometry("500x400")
 window.title("City management")
 
-title = Label(window, text="City management")
+canvas = Canvas(window)
+scrollbar = Scrollbar(window, orient="vertical", command=canvas.yview)
+scrollable_frame = Frame(canvas)
+
+scrollable_frame.bind(
+    "<Configure>",
+    lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
+)
+
+canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
+canvas.configure(yscrollcommand=scrollbar.set)
+
+canvas.pack(side="left", fill="both", expand=True)
+scrollbar.pack(side="right", fill="y")
+
+title = Label(scrollable_frame, text="City management \n")
 title.pack(side=TOP)
 
 # -------------------------
@@ -81,12 +97,10 @@ def draw_map(map_grid, buildings):
 # -------------------------
 
 def add_notification(text, duration=2000):
-    """Ajoute un message temporaire"""
     end_time = pygame.time.get_ticks() + duration
     notifications.append((text, end_time))
 
 def draw_notifications():
-    """Affiche les notifications"""
     current_time = pygame.time.get_ticks()
     y_offset = 20
     for text, end_time in notifications[:]:
@@ -97,23 +111,21 @@ def draw_notifications():
             screen.blit(notif_text, (20, y_offset))
             y_offset += 30
 
-#--------------------------
-# CREATION DE DEUXIEME FENETRE
-#--------------------------
+# -------------------------
+# INFOS BUILDINGS
+# -------------------------
 
 def building_info():
-    building_info = Tk()
-    NUM_HOUSES_label = Label(building_info, text=f"nombre de maisons/hlm: {NUM_HOUSES}").pack()
-    NUM_FACTORIES_label = Label(building_info, text=f"nombre de factories: {NUM_FACTORIES}").pack()
-    
-    NUM_PARC_label = Label(building_info, text=f"nombre de parc: {NUM_PARC}").pack()
-    NUM_CIRCUS_label = Label(building_info, text=f"nombre de cirques: {NUM_CIRCUS}").pack()
-    NUM_RAF_label = Label(building_info, text=f"nombre de rafineries: {NUM_RAF}").pack()
-    NUM_BANK_label=Label(building_info, text=f"nombre de banques: {NUM_BANK}").pack()
-    building_info.mainloop
 
-
-
+    return
+    building_info = Toplevel(window)
+    Label(building_info, text=f"maisons/hlm: {NUM_HOUSES}").pack()
+    Label(building_info, text=f"factories: {NUM_FACTORIES}").pack()
+    Label(building_info, text=f"parcs: {NUM_PARC}").pack()
+    Label(building_info, text=f"cirques: {NUM_CIRCUS}").pack()
+    Label(building_info, text=f"rafineries: {NUM_RAF}").pack()
+    Label(building_info, text=f"banques: {NUM_BANK}").pack()
+    building_info.mainloop()
 
 # -------------------------
 # ACHATS
@@ -124,7 +136,7 @@ def buy_house():
     if village_money < 10:
         add_notification("Pas assez d'argent")
         return
-    houses.append(generate_building(VILLAGE_CENTER[0], VILLAGE_CENTER[1], (0,0,200)))
+    houses.append(generate_building(*VILLAGE_CENTER, (0,0,200)))
     NUM_HOUSES += 1
     village_money -= 10
     add_notification("Maison construite")
@@ -134,7 +146,7 @@ def buy_factory():
     if village_money < 100:
         add_notification("Pas assez d'argent")
         return
-    factories.append(generate_building(VILLAGE_CENTER[0], VILLAGE_CENTER[1], (200,0,0)))
+    factories.append(generate_building(*VILLAGE_CENTER, (200,0,0)))
     NUM_FACTORIES += 1
     village_money -= 100
     add_notification("Factory construite")
@@ -144,7 +156,7 @@ def buy_hlm():
     if village_money < 95:
         add_notification("Pas assez d'argent")
         return
-    factories.append(generate_building(VILLAGE_CENTER[0], VILLAGE_CENTER[1], (120,0,255)))
+    factories.append(generate_building(*VILLAGE_CENTER, (120,0,255)))
     NUM_HLM += 1
     village_money -= 95
     NUM_HOUSES += 10
@@ -159,65 +171,73 @@ def buy_parc():
     NUM_PARC += 1
     villagers_happy += 4
     village_money -= 70
-    factories.append(generate_building(VILLAGE_CENTER[0], VILLAGE_CENTER[1], (200,255,200)))
+    factories.append(generate_building(*VILLAGE_CENTER, (200,255,200)))
     add_notification("Parc construit")
+
 def buy_circus():
     global NUM_CIRCUS,village_money
-    if village_money <  150:
+    if village_money < 150:
         add_notification("Pas assez d'argent")
         return
     NUM_CIRCUS += 1
     village_money -= 150
-    factories.append(generate_building(VILLAGE_CENTER[0], VILLAGE_CENTER[1],(100,200,250)))
+    factories.append(generate_building(*VILLAGE_CENTER,(100,200,250)))
     add_notification("Cirque construit")
+
 def buy_raf():
     global NUM_RAF,village_money
-
     if village_money < 180:
-        add_notification ("Pas assez d'argent")
+        add_notification("Pas assez d'argent")
         return
     NUM_RAF += 1
     village_money -= 180
-    factories.append(generate_building(VILLAGE_CENTER[0],VILLAGE_CENTER[1],(20,20,20)))
+    factories.append(generate_building(*VILLAGE_CENTER,(20,20,20)))
     add_notification("Rafinerie construite")
+
 def buy_bank():
     global NUM_BANK,village_money
     if village_money < 200:
-        add_notification("Pas assey d argent")
+        add_notification("Pas assez d'argent")
         return
     NUM_BANK+=1
     village_money -= 200
-    factories.append(generate_building(VILLAGE_CENTER[0],VILLAGE_CENTER[1],(0,255,0)))
+    factories.append(generate_building(*VILLAGE_CENTER,(0,255,0)))
     add_notification("Banque construite")
 
-
 # -------------------------
-# BOUTONS TKINTER
+# BOUTONS SCROLLABLE
 # -------------------------
 
-Button(window, text="Acheter maison $10", command=buy_house).pack()
-Label(window, text="Permet d avoir de la main d oeuvre pour les factory\n").pack()
-Button(window, text="Acheter factory $100", command=buy_factory).pack()
-Label(window, text="Permet de produire de l argent toutes les secondes si il y a assez de mains d oeuvre\n").pack()
-Button(window, text="Acheter HLM $90", command=buy_hlm).pack()
-Label(window, text="Permet d avoir de la main d oeuvre pour la factory mais diminue la joie de habitants (1 hlm = 10 maisons)\n").pack()
-Button(window, text="Acheter parc $70", command=buy_parc).pack()
-Label(window, text="Permet d avoir de la joie \n").pack()
-Button(window, text= "Acheter Cirque $150", command=buy_circus).pack()
-Label(window, text="Permet d avoir un revenu passif de joie \n").pack()
-Button(window,text="acheter une rafinerie $180", command=buy_raf).pack()
-Label(window, text="Diminue la joie des habitants mais genere un revenu passif \n").pack()
-Button(window, text="Acheter une baque $200", command=buy_bank).pack()
-Label(window, text="Permet d avoir un revenu passif aleatoire compris entre -20 et 20 \n").pack()
-Button(window, text="info sur les buildings", command=building_info).pack()
+Button(scrollable_frame, text="Acheter maison $10", command=buy_house).pack()
+Label(scrollable_frame, text="Main d'oeuvre").pack()
+
+Button(scrollable_frame, text="Acheter factory $100", command=buy_factory).pack()
+Label(scrollable_frame, text="Produit de l'argent").pack()
+
+Button(scrollable_frame, text="Acheter HLM $90", command=buy_hlm).pack()
+Label(scrollable_frame, text="+10 maisons mais - bonheur").pack()
+
+Button(scrollable_frame, text="Acheter parc $70", command=buy_parc).pack()
+Label(scrollable_frame, text="+ bonheur").pack()
+
+Button(scrollable_frame, text="Acheter Cirque $150", command=buy_circus).pack()
+Label(scrollable_frame, text="bonus bonheur").pack()
+
+Button(scrollable_frame, text="Rafinerie $180", command=buy_raf).pack()
+Label(scrollable_frame, text="- bonheur + argent").pack()
+
+Button(scrollable_frame, text="Banque $200", command=buy_bank).pack()
+Label(scrollable_frame, text="revenu aléatoire").pack()
+
+Button(scrollable_frame, text="Infos", command=building_info).pack()
 
 # -------------------------
 # MAP INIT
 # -------------------------
 
 pixel_map = generate_map()
-houses = [generate_building(VILLAGE_CENTER[0], VILLAGE_CENTER[1], (0,0,200)) for _ in range(NUM_HOUSES)]
-factories = [generate_building(VILLAGE_CENTER[0], VILLAGE_CENTER[1], (200,0,0)) for _ in range(NUM_FACTORIES)]
+houses = [generate_building(*VILLAGE_CENTER, (0,0,200)) for _ in range(NUM_HOUSES)]
+factories = [generate_building(*VILLAGE_CENTER, (200,0,0)) for _ in range(NUM_FACTORIES)]
 
 # -------------------------
 # TIMER
@@ -229,79 +249,67 @@ pygame.time.set_timer(TWO_SEC_EVENT, 1000)
 clock = pygame.time.Clock()
 running = True
 
+event_taxes=0
+event_circus=0
+event_bank=0
+
 # -------------------------
 # GAME LOOP
 # -------------------------
-event_taxes=0
-event_circus=0
-event_raf=0
-event_bank=0
+
 while running:
+    if village_money < 0:
+        quit()
+    if villagers_happy < 50:
+        quit()
+
+
+
+
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
+
         elif event.type == TWO_SEC_EVENT:
-            event_taxes=event_taxes+1
-            event_circus=event_circus+1
-            event_bank=event_bank+1
-            #faire un event ou on reçoit de l argent selon le nombre de personnes et leurs happiness mais apres leurs hapinness va desendre
-            
+            event_taxes+=1
+            event_circus+=1
+            event_bank+=1
+
             if event_taxes==10:
-                village_money=village_money + (NUM_HOUSES//5)
-                villagers_happy = villagers_happy - 3
+                village_money += (NUM_HOUSES//5)
+                villagers_happy -= 3
                 event_taxes=0
-                add_notification("impots +", village_money)
-                
-                malus=NUM_BANK * 4 + NUM_RAF * 5 + NUM_CIRCUS * 2 + NUM_PARC*2
-                malus += villagers_happy //20
-                if malus > 0:
-                    add_notification(f"Malus : entretiens - {malus}")
-                village_money -= malus
+
             if event_circus==5:
-                #event cirque
-                if villagers_happy < 100:
-                    villagers_happy=villagers_happy + 2 *NUM_CIRCUS
+                villagers_happy += 2 * NUM_CIRCUS
+                villagers_happy -= 5 * NUM_RAF
+                village_money += 15 * NUM_RAF
                 event_circus=0
-                if NUM_RAF > 0:
-                    villagers_happy=villagers_happy - 5 * NUM_RAF
-                    village_money=village_money + 15 * NUM_RAF
-                village_money=village_money+(villagers_happy // 10)
-            if event_bank == 15:
-                
-                if NUM_BANK > 0:
 
-                    oldvillage_money=village_money + (random.randint(-20,20))*NUM_BANK
-                    print("banque donnée argent")
-                    print("votre balance va etre de + ",oldvillage_money - village_money)
-                    village_money=oldvillage_money
-
-
+            if event_bank==15:
+                village_money += random.randint(-20,20)*NUM_BANK
                 event_bank=0
 
-
-            elif villagers_happy < 50:
-                print("fin du jeu la")
-
-                quit()
-            
             village_money = factories_money(NUM_FACTORIES, NUM_HOUSES, village_money)
-            
-    if village_money < 0:
-        print("plus d argent")
-        quit()
-    # Dessin
+
     screen.fill((0,0,0))
     draw_map(pixel_map, houses + factories)
-    # Texte argent et bonheur
+
     money_text = font.render(f"$ : {village_money}", True, (255,255,255))
     happiness_text = font.render(f":) : {villagers_happy}", True, (255,255,255))
+
     screen.blit(money_text, (WIDTH - 200, HEIGHT - 40))
     screen.blit(happiness_text, (WIDTH - 200, HEIGHT - 80))
-    # Notifications
+
     draw_notifications()
     pygame.display.flip()
-    # Update Tkinter
+    
     window.update()
+
+        
+
+
     clock.tick(60)
+
 pygame.quit()
