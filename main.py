@@ -49,11 +49,11 @@ title.pack(side=TOP)
 def factories_money(NUM_FACTORIES, NUM_HOUSES, village_money):
     workers_needed = NUM_FACTORIES * 10
     if NUM_HOUSES < workers_needed:
-        missing_workers = workers_needed - NUM_HOUSES
+        missing_workers = workers_needed - NUM_HOUSES * 1.5
         village_money += (NUM_HOUSES // 10) + (NUM_FACTORIES//2)
         village_money -= missing_workers
     else:
-        village_money += int(((NUM_FACTORIES * (1+(villagers_happy//100)))//1) + NUM_FACTORIES //2)
+        village_money += int(((NUM_FACTORIES * (1+(villagers_happy//100)))//1))
     return village_money
 
 def generate_map():
@@ -196,13 +196,19 @@ def buy_bank():
 # -------------------------
 
 Button(window, text="Acheter maison $10", command=buy_house).pack()
+Label(window, text="Permet d avoir de la main d oeuvre pour les factory\n").pack()
 Button(window, text="Acheter factory $100", command=buy_factory).pack()
+Label(window, text="Permet de produire de l argent toutes les secondes si il y a assez de mains d oeuvre\n").pack()
 Button(window, text="Acheter HLM $90", command=buy_hlm).pack()
+Label(window, text="Permet d avoir de la main d oeuvre pour la factory mais diminue la joie de habitants (1 hlm = 10 maisons)\n").pack()
 Button(window, text="Acheter parc $70", command=buy_parc).pack()
+Label(window, text="Permet d avoir de la joie \n").pack()
 Button(window, text= "Acheter Cirque $150", command=buy_circus).pack()
+Label(window, text="Permet d avoir un revenu passif de joie \n").pack()
 Button(window,text="acheter une rafinerie $180", command=buy_raf).pack()
+Label(window, text="Diminue la joie des habitants mais genere un revenu passif \n").pack()
 Button(window, text="Acheter une baque $200", command=buy_bank).pack()
-
+Label(window, text="Permet d avoir un revenu passif aleatoire compris entre -20 et 20 \n").pack()
 Button(window, text="info sur les buildings", command=building_info).pack()
 
 # -------------------------
@@ -242,11 +248,16 @@ while running:
             #faire un event ou on reçoit de l argent selon le nombre de personnes et leurs happiness mais apres leurs hapinness va desendre
             
             if event_taxes==10:
-                village_money=village_money+(NUM_HOUSES//3)
-                villagers_happy=villagers_happy-3
+                village_money=village_money + (NUM_HOUSES//5)
+                villagers_happy = villagers_happy - 3
                 event_taxes=0
                 add_notification("impots +", village_money)
-            
+                
+                malus=NUM_BANK * 4 + NUM_RAF * 5 + NUM_CIRCUS * 2 + NUM_PARC*2
+                malus += villagers_happy //20
+                if malus > 0:
+                    add_notification(f"Malus : entretiens - {malus}")
+                village_money -= malus
             if event_circus==5:
                 #event cirque
                 if villagers_happy < 100:
@@ -254,14 +265,13 @@ while running:
                 event_circus=0
                 if NUM_RAF > 0:
                     villagers_happy=villagers_happy - 5 * NUM_RAF
-                    village_money=village_money + 20 * NUM_RAF
-            
-            if event_bank > 19:
+                    village_money=village_money + 15 * NUM_RAF
+                village_money=village_money+(villagers_happy // 10)
+            if event_bank == 15:
                 
                 if NUM_BANK > 0:
 
-                    oldvillage_money=(village_money + (200 + random.randint(-220,150)))*NUM_BANK
-                    NUM_BANK=0
+                    oldvillage_money=village_money + (random.randint(-20,20))*NUM_BANK
                     print("banque donnée argent")
                     print("votre balance va etre de + ",oldvillage_money - village_money)
                     village_money=oldvillage_money
