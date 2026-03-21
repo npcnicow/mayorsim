@@ -28,7 +28,7 @@ NUM_PARC = 0
 NUM_CIRCUS = 0
 NUM_RAF = 0
 NUM_BANK=0
-village_money = 0
+village_money = 100000000
 
 notifications = []
 
@@ -65,7 +65,7 @@ title.pack(side=TOP)
 def factories_money(NUM_FACTORIES, NUM_HOUSES, village_money):
     workers_needed = NUM_FACTORIES * 10
     if NUM_HOUSES < workers_needed:
-        missing_workers = workers_needed - NUM_HOUSES * 1.5
+        missing_workers = workers_needed - NUM_HOUSES
         village_money += (NUM_HOUSES // 10) + (NUM_FACTORIES//2)
         village_money -= missing_workers
     else:
@@ -203,6 +203,32 @@ def buy_bank():
     village_money -= 200
     factories.append(generate_building(*VILLAGE_CENTER,(0,255,0)))
     add_notification("Banque construite")
+def buy_sfactory():
+        global NUM_FACTORIES, village_money, villagers_happy
+        if village_money < 500:
+            add_notification("Pas assez d argent")
+            return
+        NUM_FACTORIES += 10
+        villagers_happy -= 3
+        village_money=village_money - 500
+        factories.append(generate_building(*VILLAGE_CENTER,(255,0,15)))
+
+
+def buy_building():
+    global NUM_HLM, village_money, NUM_HOUSES, villagers_happy
+    if village_money < 600:
+        add_notification("Pas assez d'argent")
+        return
+    factories.append(generate_building(*VILLAGE_CENTER, (70,0,255)))
+    NUM_HLM += 1
+    village_money -= 600
+    NUM_HOUSES += 100
+    villagers_happy -= 1
+    add_notification("Building construit")
+
+
+
+
 
 # -------------------------
 # BOUTONS SCROLLABLE
@@ -228,6 +254,13 @@ Label(scrollable_frame, text="- bonheur + argent").pack()
 
 Button(scrollable_frame, text="Banque $200", command=buy_bank).pack()
 Label(scrollable_frame, text="revenu aléatoire").pack()
+
+Button(scrollable_frame, text="super factory $500", command= buy_sfactory).pack()
+Label(scrollable_frame, text="super factory pr produire de l argent -5 happiness")
+
+Button(scrollable_frame, text="buy building $600", command=buy_building).pack()
+
+
 
 Button(scrollable_frame, text="Infos", command=building_info).pack()
 
@@ -258,16 +291,21 @@ event_bank=0
 # -------------------------
 
 while running:
-    if village_money < 0:
-        quit()
-    if villagers_happy < 50:
-        quit()
-
-
-
-
 
     for event in pygame.event.get():
+
+    
+        if village_money < 0:
+            print("plus d argent")
+            quit()
+        if villagers_happy < 50:
+            print("plus content")
+            quit()
+
+        
+
+
+
         if event.type == pygame.QUIT:
             running = False
 
@@ -275,17 +313,25 @@ while running:
             event_taxes+=1
             event_circus+=1
             event_bank+=1
+            malus=(NUM_BANK*5+NUM_PARC*3 + NUM_RAF*3 + NUM_CIRCUS*3) +villagers_happy//10 +NUM_HOUSES//200
+            
+
+
 
             if event_taxes==10:
                 village_money += (NUM_HOUSES//5)
                 villagers_happy -= 3
                 event_taxes=0
+                if malus > 0:
+                    village_money -= malus
+                    add_notification(f"malus - {malus}",duration=2000)
 
             if event_circus==5:
                 villagers_happy += 2 * NUM_CIRCUS
                 villagers_happy -= 5 * NUM_RAF
                 village_money += 15 * NUM_RAF
                 event_circus=0
+
 
             if event_bank==15:
                 village_money += random.randint(-20,20)*NUM_BANK
