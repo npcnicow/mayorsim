@@ -241,7 +241,7 @@ def buy_building():
     add_notification("Building construit")
 
 def buy_generator():
-    global NUM_HLM, village_money, NUM_HOUSES, villagers_happy,NUM_WORK
+    global NUM_HLM, village_money, NUM_HOUSES, villagers_happy,NUM_WORK,NUM_GENERATOR
     if village_money < 50:
         add_notification("pas assez d'argent")
         return
