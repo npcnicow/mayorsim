@@ -28,7 +28,14 @@ NUM_PARC = 0
 NUM_CIRCUS = 0
 NUM_RAF = 0
 NUM_BANK=0
-village_money = 100000000
+village_money = 0
+NUM_WORK=0
+NUM_GENERATOR = 1
+
+electricity = 50
+max_electricity = 50
+
+
 
 notifications = []
 
@@ -63,17 +70,21 @@ title.pack(side=TOP)
 # -------------------------
 
 def factories_money(NUM_FACTORIES, NUM_HOUSES, village_money):
-    workers_needed = NUM_FACTORIES * 10
-    if NUM_HOUSES < workers_needed:
-        missing_workers = workers_needed - NUM_HOUSES
-        village_money += (NUM_HOUSES // 10) + (NUM_FACTORIES//2)
-        village_money -= missing_workers
-    else:
-        village_money += int(((NUM_FACTORIES * (1+(villagers_happy//100)))//1))
-    return village_money
+    global electricity
+    if electricity > 0:
+        workers_needed = NUM_HOUSES * 3
+        if NUM_WORK < workers_needed:
+            missing_workers = workers_needed - NUM_WORK
+            village_money += (NUM_HOUSES // 10) + (NUM_FACTORIES//2)
+            village_money -= missing_workers
+        else:
+            village_money += int(((NUM_FACTORIES * (1+(villagers_happy//100)))//1))
+        return village_money
+
 
 def generate_map():
-    return [[(34,139,34) for _ in range(GRID_HEIGHT)] for _ in range(GRID_WIDTH)]
+    return [[(87, 171, 97) for _ in range(GRID_HEIGHT)] for _ in range(GRID_WIDTH)]
+
 
 def generate_building(center_x, center_y, color):
     dx = int(random.gauss(0, 7))
@@ -132,13 +143,14 @@ def building_info():
 # -------------------------
 
 def buy_house():
-    global NUM_HOUSES, village_money
+    global NUM_HOUSES, village_money,NUM_WORK
     if village_money < 10:
         add_notification("Pas assez d'argent")
         return
-    houses.append(generate_building(*VILLAGE_CENTER, (0,0,200)))
+    houses.append(generate_building(*VILLAGE_CENTER, (65, 71, 145)))
     NUM_HOUSES += 1
     village_money -= 10
+    NUM_WORK = NUM_WORK + (random.randint(2,4))
     add_notification("Maison construite")
 
 def buy_factory():
@@ -146,21 +158,22 @@ def buy_factory():
     if village_money < 100:
         add_notification("Pas assez d'argent")
         return
-    factories.append(generate_building(*VILLAGE_CENTER, (200,0,0)))
+    factories.append(generate_building(*VILLAGE_CENTER, (196, 71, 71)))
     NUM_FACTORIES += 1
     village_money -= 100
     add_notification("Factory construite")
 
 def buy_hlm():
-    global NUM_HLM, village_money, NUM_HOUSES, villagers_happy
+    global NUM_HLM, village_money, NUM_HOUSES, villagers_happy,NUM_WORK
     if village_money < 95:
         add_notification("Pas assez d'argent")
         return
-    factories.append(generate_building(*VILLAGE_CENTER, (120,0,255)))
+    factories.append(generate_building(*VILLAGE_CENTER, (71, 181, 196)))
     NUM_HLM += 1
     village_money -= 95
     NUM_HOUSES += 10
     villagers_happy -= 1
+    NUM_WORK = NUM_WORK + (random.randint(20,40))
     add_notification("HLM construit")
 
 def buy_parc():
@@ -171,7 +184,7 @@ def buy_parc():
     NUM_PARC += 1
     villagers_happy += 4
     village_money -= 70
-    factories.append(generate_building(*VILLAGE_CENTER, (200,255,200)))
+    factories.append(generate_building(*VILLAGE_CENTER, (68, 194, 106)))
     add_notification("Parc construit")
 
 def buy_circus():
@@ -181,7 +194,7 @@ def buy_circus():
         return
     NUM_CIRCUS += 1
     village_money -= 150
-    factories.append(generate_building(*VILLAGE_CENTER,(100,200,250)))
+    factories.append(generate_building(*VILLAGE_CENTER,(224, 164, 167)))
     add_notification("Cirque construit")
 
 def buy_raf():
@@ -191,7 +204,7 @@ def buy_raf():
         return
     NUM_RAF += 1
     village_money -= 180
-    factories.append(generate_building(*VILLAGE_CENTER,(20,20,20)))
+    factories.append(generate_building(*VILLAGE_CENTER,(173, 131, 106)))
     add_notification("Rafinerie construite")
 
 def buy_bank():
@@ -201,7 +214,7 @@ def buy_bank():
         return
     NUM_BANK+=1
     village_money -= 200
-    factories.append(generate_building(*VILLAGE_CENTER,(0,255,0)))
+    factories.append(generate_building(*VILLAGE_CENTER,(51, 130, 101)))
     add_notification("Banque construite")
 def buy_sfactory():
         global NUM_FACTORIES, village_money, villagers_happy
@@ -211,23 +224,46 @@ def buy_sfactory():
         NUM_FACTORIES += 10
         villagers_happy -= 3
         village_money=village_money - 500
-        factories.append(generate_building(*VILLAGE_CENTER,(255,0,15)))
+        factories.append(generate_building(*VILLAGE_CENTER,(130, 51, 55)))
 
 
 def buy_building():
-    global NUM_HLM, village_money, NUM_HOUSES, villagers_happy
+    global NUM_HLM, village_money, NUM_HOUSES, villagers_happy,NUM_WORK
     if village_money < 600:
         add_notification("Pas assez d'argent")
         return
-    factories.append(generate_building(*VILLAGE_CENTER, (70,0,255)))
+    factories.append(generate_building(*VILLAGE_CENTER, (51, 54, 130)))
     NUM_HLM += 1
     village_money -= 600
     NUM_HOUSES += 100
     villagers_happy -= 1
+    NUM_WORK = NUM_WORK + (random.randint(200,400))
     add_notification("Building construit")
 
+def buy_generator():
+    global NUM_HLM, village_money, NUM_HOUSES, villagers_happy,NUM_WORK
+    if village_money < 50:
+        add_notification("pas assez d'argent")
+        return
+    factories.append(generate_building(*VILLAGE_CENTER, (225, 227, 93)))
+    
+    village_money=village_money-50
+    NUM_GENERATOR+=1
+    add_notification("Building construit")
 
+    
+def buy_capacitor():
+    global NUM_HLM, village_money, NUM_HOUSES, villagers_happy,NUM_WORK,max_electricity
+    if village_money < 70:
+        add_notification("pas assez d'argent")
+        return
+    factories.append(generate_building(*VILLAGE_CENTER, (91, 222, 176)))
+    
+    village_money=village_money-70
+    max_electricity = max_electricity + 50
+    add_notification("Building construit")
 
+    
 
 
 # -------------------------
@@ -237,14 +273,20 @@ def buy_building():
 Button(scrollable_frame, text="Acheter maison $10", command=buy_house).pack()
 Label(scrollable_frame, text="Main d'oeuvre").pack()
 
-Button(scrollable_frame, text="Acheter factory $100", command=buy_factory).pack()
-Label(scrollable_frame, text="Produit de l'argent").pack()
+Button(scrollable_frame, text="Acheter generateur $50", command=buy_generator).pack()
+Label(scrollable_frame, text="+5 electricity/s").pack()
+
+Button(scrollable_frame, text="Acheter capacitor $70", command=buy_capacitor).pack()
+Label(scrollable_frame, text="+50 max electricity").pack()
+
+Button(scrollable_frame, text="Acheter parc $70", command=buy_parc).pack()
+Label(scrollable_frame, text="+ bonheur").pack()
 
 Button(scrollable_frame, text="Acheter HLM $90", command=buy_hlm).pack()
 Label(scrollable_frame, text="+10 maisons mais - bonheur").pack()
 
-Button(scrollable_frame, text="Acheter parc $70", command=buy_parc).pack()
-Label(scrollable_frame, text="+ bonheur").pack()
+Button(scrollable_frame, text="Acheter factory $100", command=buy_factory).pack()
+Label(scrollable_frame, text="Produit de l'argent").pack()
 
 Button(scrollable_frame, text="Acheter Cirque $150", command=buy_circus).pack()
 Label(scrollable_frame, text="bonus bonheur").pack()
@@ -264,13 +306,18 @@ Button(scrollable_frame, text="buy building $600", command=buy_building).pack()
 
 Button(scrollable_frame, text="Infos", command=building_info).pack()
 
+
 # -------------------------
 # MAP INIT
-# -------------------------
+# -------------------------53, 135, 63
 
 pixel_map = generate_map()
-houses = [generate_building(*VILLAGE_CENTER, (0,0,200)) for _ in range(NUM_HOUSES)]
-factories = [generate_building(*VILLAGE_CENTER, (200,0,0)) for _ in range(NUM_FACTORIES)]
+
+textures = [generate_building(*VILLAGE_CENTER, (70, 153, 80)) for _ in range(NUM_HOUSES *10 )]
+
+
+houses = [generate_building(*VILLAGE_CENTER, (65, 71, 145)) for _ in range(NUM_HOUSES)]
+factories = [generate_building(*VILLAGE_CENTER, (196, 71, 71)) for _ in range(NUM_FACTORIES)]
 
 # -------------------------
 # TIMER
@@ -285,6 +332,15 @@ running = True
 event_taxes=0
 event_circus=0
 event_bank=0
+
+
+#mettre la worforce
+i_workforce=0
+while i_workforce != NUM_HOUSES:
+    NUM_WORK = NUM_WORK + random.randint(2,4)
+    i_workforce+=1
+
+
 
 # -------------------------
 # GAME LOOP
@@ -302,10 +358,6 @@ while running:
             print("plus content")
             quit()
 
-        
-
-
-
         if event.type == pygame.QUIT:
             running = False
 
@@ -314,9 +366,6 @@ while running:
             event_circus+=1
             event_bank+=1
             malus=(NUM_BANK*5+NUM_PARC*3 + NUM_RAF*3 + NUM_CIRCUS*3) +villagers_happy//10 +NUM_HOUSES//200
-            
-
-
 
             if event_taxes==10:
                 village_money += (NUM_HOUSES//5)
@@ -327,11 +376,23 @@ while running:
                     add_notification(f"malus - {malus}",duration=2000)
 
             if event_circus==5:
-                villagers_happy += 2 * NUM_CIRCUS
-                villagers_happy -= 5 * NUM_RAF
-                village_money += 15 * NUM_RAF
+                if electricity > 0:
+                    villagers_happy += 2 * NUM_CIRCUS
+                    villagers_happy -= 5 * NUM_RAF
+                    village_money += 15 * NUM_RAF
                 event_circus=0
-
+                #generation d electricité
+                
+                
+                temp_electricity = electricity + NUM_GENERATOR * 5
+                electricity_debt = int((NUM_FACTORIES + NUM_RAF * 1.5 + NUM_CIRCUS))
+                if (temp_electricity-electricity_debt) > max_electricity: 
+                    electricity = max_electricity
+                else:
+                    electricity=temp_electricity
+                    electricity=electricity-electricity_debt
+                
+                
 
             if event_bank==15:
                 village_money += random.randint(-20,20)*NUM_BANK
@@ -339,23 +400,33 @@ while running:
 
             village_money = factories_money(NUM_FACTORIES, NUM_HOUSES, village_money)
 
-    screen.fill((0,0,0))
-    draw_map(pixel_map, houses + factories)
+    
+    screen.fill((0,0,0))  # fond
 
+    # Afficher la map + bâtiments
+    draw_map(pixel_map, textures + factories + houses)
+
+    # Afficher texte
     money_text = font.render(f"$ : {village_money}", True, (255,255,255))
     happiness_text = font.render(f":) : {villagers_happy}", True, (255,255,255))
-
+    population_text = font.render(f"P : {NUM_HOUSES}", True, (255,255,255))
+    factories_text = font.render (f"F : {NUM_FACTORIES}", True, (255,255,255))
+    workforce_text = font.render (f"W : {NUM_WORK}", True, (255,255,255))
+    
+    electricity_text = font.render (f"E : {electricity}", True, (255,255,255))
+    
     screen.blit(money_text, (WIDTH - 200, HEIGHT - 40))
     screen.blit(happiness_text, (WIDTH - 200, HEIGHT - 80))
-
-    draw_notifications()
-    pygame.display.flip()
+    screen.blit(workforce_text, (WIDTH - 200, HEIGHT - 120))
+    screen.blit(population_text, (WIDTH - 200, HEIGHT - 160))
+    screen.blit(factories_text, (WIDTH - 200, HEIGHT - 200))
+    screen.blit(electricity_text, (WIDTH - 200, HEIGHT - 240))
     
+    
+    draw_notifications()
+    
+    pygame.display.flip()
     window.update()
-
-        
-
-
     clock.tick(60)
 
 pygame.quit()
