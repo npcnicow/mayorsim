@@ -28,12 +28,14 @@ NUM_PARC = 0
 NUM_CIRCUS = 0
 NUM_RAF = 0
 NUM_BANK=0
-village_money = 0
+village_money = 50
 NUM_WORK=0
-NUM_GENERATOR = 1
-
+NUM_GENERATOR = 2
 electricity = 50
 max_electricity = 50
+
+
+
 
 
 
@@ -87,8 +89,8 @@ def generate_map():
 
 
 def generate_building(center_x, center_y, color):
-    dx = int(random.gauss(0, 7))
-    dy = int(random.gauss(0, 7))
+    dx = int(random.gauss(0, 8))
+    dy = int(random.gauss(0, 8))
     x = max(0, min(GRID_WIDTH-1, center_x + dx))
     y = max(0, min(GRID_HEIGHT-1, center_y + dy))
     return (x, y, color)
@@ -266,44 +268,50 @@ def buy_capacitor():
     
 
 
+#fonction pour choisir son parti politique
+def polp_chose():
+    pass
+
+
 # -------------------------
 # BOUTONS SCROLLABLE
 # -------------------------
+Label(scrollable_frame, text="").pack()
+Label(scrollable_frame, text="-Politique-").pack()
 
+spin_value = IntVar()
+
+spin = Spinbox(scrollable_frame, from_=0, to=50, textvariable=spin_value)
+spin.pack()
+Button(scrollable_frame, text="Choisis ton bord politique", command=polp_chose).pack()
+
+
+
+
+
+Label(scrollable_frame, text="-Infrastructure-").pack()
+Label(scrollable_frame, text="").pack()
 Button(scrollable_frame, text="Acheter maison $10", command=buy_house).pack()
 Label(scrollable_frame, text="Main d'oeuvre").pack()
-
 Button(scrollable_frame, text="Acheter generateur $50", command=buy_generator).pack()
 Label(scrollable_frame, text="+5 electricity/s").pack()
-
 Button(scrollable_frame, text="Acheter capacitor $70", command=buy_capacitor).pack()
-Label(scrollable_frame, text="+50 max electricity").pack()
-
+Label(scrollable_frame, text="+5 electricity/s").pack()
 Button(scrollable_frame, text="Acheter parc $70", command=buy_parc).pack()
 Label(scrollable_frame, text="+ bonheur").pack()
-
 Button(scrollable_frame, text="Acheter HLM $90", command=buy_hlm).pack()
 Label(scrollable_frame, text="+10 maisons mais - bonheur").pack()
-
 Button(scrollable_frame, text="Acheter factory $100", command=buy_factory).pack()
 Label(scrollable_frame, text="Produit de l'argent").pack()
-
 Button(scrollable_frame, text="Acheter Cirque $150", command=buy_circus).pack()
 Label(scrollable_frame, text="bonus bonheur").pack()
-
 Button(scrollable_frame, text="Rafinerie $180", command=buy_raf).pack()
 Label(scrollable_frame, text="- bonheur + argent").pack()
-
 Button(scrollable_frame, text="Banque $200", command=buy_bank).pack()
 Label(scrollable_frame, text="revenu aléatoire").pack()
-
 Button(scrollable_frame, text="super factory $500", command= buy_sfactory).pack()
 Label(scrollable_frame, text="super factory pr produire de l argent -5 happiness")
-
 Button(scrollable_frame, text="buy building $600", command=buy_building).pack()
-
-
-
 Button(scrollable_frame, text="Infos", command=building_info).pack()
 
 
@@ -311,13 +319,24 @@ Button(scrollable_frame, text="Infos", command=building_info).pack()
 # MAP INIT
 # -------------------------53, 135, 63
 
+
+
+
 pixel_map = generate_map()
 
 textures = [generate_building(*VILLAGE_CENTER, (70, 153, 80)) for _ in range(NUM_HOUSES *10 )]
 
-
 houses = [generate_building(*VILLAGE_CENTER, (65, 71, 145)) for _ in range(NUM_HOUSES)]
 factories = [generate_building(*VILLAGE_CENTER, (196, 71, 71)) for _ in range(NUM_FACTORIES)]
+
+
+
+a_numelec=0
+while a_numelec !=NUM_GENERATOR:
+    factories.append(generate_building(*VILLAGE_CENTER, (225, 227, 93)))
+    a_numelec=a_numelec+1
+
+
 
 # -------------------------
 # TIMER
@@ -352,11 +371,13 @@ while running:
 
     
         if village_money < 0:
+            
             print("plus d argent")
             quit()
         if villagers_happy < 50:
+            
             print("plus content")
-            quit()
+            NUM_WORK -= random.randint(villagers_happy , villagers_happy*2)
 
         if event.type == pygame.QUIT:
             running = False
@@ -368,13 +389,19 @@ while running:
             malus=(NUM_BANK*5+NUM_PARC*3 + NUM_RAF*3 + NUM_CIRCUS*3) +villagers_happy//10 +NUM_HOUSES//200
 
             if event_taxes==10:
-                village_money += (NUM_HOUSES//5)
-                villagers_happy -= 3
+                imposition = spin_value.get()
+                if imposition > 0:
+                    print(imposition)
+                    imposition = 100 / imposition
+                
+                    village_money = village_money+((NUM_HOUSES//5) * imposition)//1
+                    villagers_happy = villagers_happy - ((3* (imposition*2))//1)
                 event_taxes=0
                 if malus > 0:
                     village_money -= malus
                     add_notification(f"malus - {malus}",duration=2000)
-
+                if villagers_happy > 80:
+                    NUM_HOUSES += 1
             if event_circus==5:
                 if electricity > 0:
                     villagers_happy += 2 * NUM_CIRCUS
@@ -385,7 +412,7 @@ while running:
                 
                 
                 temp_electricity = electricity + NUM_GENERATOR * 5
-                electricity_debt = int((NUM_FACTORIES + NUM_RAF * 1.5 + NUM_CIRCUS))
+                electricity_debt = int((NUM_FACTORIES * 1.5 + NUM_RAF * 2.5 + NUM_CIRCUS*2)//1)
                 if (temp_electricity-electricity_debt) > max_electricity: 
                     electricity = max_electricity
                 else:
@@ -409,24 +436,18 @@ while running:
     # Afficher texte
     money_text = font.render(f"$ : {village_money}", True, (255,255,255))
     happiness_text = font.render(f":) : {villagers_happy}", True, (255,255,255))
-    population_text = font.render(f"P : {NUM_HOUSES}", True, (255,255,255))
-    factories_text = font.render (f"F : {NUM_FACTORIES}", True, (255,255,255))
-    workforce_text = font.render (f"W : {NUM_WORK}", True, (255,255,255))
-    
+    #population_text = font.render(f" : {NUM_HOUSES}", True, (255,255,255))
+    factories_text = font.render (f"Usines : {NUM_FACTORIES}", True, (255,255,255))
+    workforce_text = font.render (f"Pop  : {NUM_WORK}", True, (255,255,255))
     electricity_text = font.render (f"E : {electricity}", True, (255,255,255))
-    
     screen.blit(money_text, (WIDTH - 200, HEIGHT - 40))
     screen.blit(happiness_text, (WIDTH - 200, HEIGHT - 80))
     screen.blit(workforce_text, (WIDTH - 200, HEIGHT - 120))
-    screen.blit(population_text, (WIDTH - 200, HEIGHT - 160))
-    screen.blit(factories_text, (WIDTH - 200, HEIGHT - 200))
-    screen.blit(electricity_text, (WIDTH - 200, HEIGHT - 240))
-    
-    
+    #screen.blit(population_text, (WIDTH - 200, HEIGHT - 160))
+    screen.blit(factories_text, (WIDTH - 200, HEIGHT - 160))
+    screen.blit(electricity_text, (WIDTH - 200, HEIGHT - 200))
     draw_notifications()
-    
     pygame.display.flip()
     window.update()
     clock.tick(60)
-
 pygame.quit()
