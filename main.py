@@ -33,8 +33,8 @@ NUM_WORK=0
 NUM_GENERATOR = 2
 electricity = 50
 max_electricity = 50
-
-
+industrial_bonus=1
+polution = True
 
 
 
@@ -77,10 +77,10 @@ def factories_money(NUM_FACTORIES, NUM_HOUSES, village_money):
         workers_needed = NUM_HOUSES * 3
         if NUM_WORK < workers_needed:
             missing_workers = workers_needed - NUM_WORK
-            village_money += (NUM_HOUSES // 10) + (NUM_FACTORIES//2)
+            village_money += ((NUM_HOUSES // 10) + (NUM_FACTORIES//2)*industrial_bonus)//1
             village_money -= missing_workers
         else:
-            village_money += int(((NUM_FACTORIES * (1+(villagers_happy//100)))//1))
+            village_money += int((((NUM_FACTORIES * (1+(villagers_happy//100)))//1))*industrial_bonus)//1
         return village_money
 
 
@@ -204,11 +204,14 @@ def buy_raf():
     if village_money < 180:
         add_notification("Pas assez d'argent")
         return
-    NUM_RAF += 1
-    village_money -= 180
-    factories.append(generate_building(*VILLAGE_CENTER,(173, 131, 106)))
-    add_notification("Rafinerie construite")
-
+    if polution == True:
+        NUM_RAF += 1
+        village_money -= 180
+        factories.append(generate_building(*VILLAGE_CENTER,(173, 131, 106)))
+        add_notification("Rafinerie construite")
+    else:
+        add_notification("Cette entreprise est beaucoup trop poluante")
+        return
 def buy_bank():
     global NUM_BANK,village_money
     if village_money < 200:
@@ -269,10 +272,31 @@ def buy_capacitor():
 
 
 #fonction pour choisir son parti politique
+party = None
 def polp_chose():
-    pass
+    global parti_actuel
 
+    def set_parti(name):
+        global parti_actuel
+        party=name
 
+    
+    
+    
+    polp_chose_window = Toplevel(window)  # 👈 IMPORTANT
+    polp_chose_window.geometry("300x200")
+    polp_chose_window.title("Politique")
+    
+    
+    
+    Label(polp_chose_window, text="Choix politique").pack()
+    Button(polp_chose_window, text="Parti communiste",command=lambda: set_parti("pc")).pack()
+    Button(polp_chose_window, text="Parti socialiste",command=lambda: set_parti("ps")).pack()
+    Button(polp_chose_window, text="Parti ecologiste",command=lambda: set_parti("pe")).pack()
+    Button(polp_chose_window, text="Parti Cente",command=lambda: set_parti("pce")).pack()
+    Button(polp_chose_window, text="Parti libertarien",command=lambda: set_parti("pl")).pack()
+    Button(polp_chose_window, text="Parti nationaliste",command=lambda: set_parti("pn")).pack()
+    
 # -------------------------
 # BOUTONS SCROLLABLE
 # -------------------------
@@ -366,7 +390,33 @@ while i_workforce != NUM_HOUSES:
 # -------------------------
 
 while running:
-
+    villagers_happy_requirement=50
+    advantage=1
+    industrial_bonus=1
+    if party == "pc":
+        villagers_happy_requirement = 45
+        advantage=1.5
+        industrial_bonus = 0.75
+        
+    if party == "ps":
+        villagers_happy_requirement=55
+        industrial_bonus = 0.90
+        
+    if party == "pe":
+        industrial_bonus = 0.60
+        villagers_happy_requirement = 45
+        
+    if party == "pce":
+        pass
+    
+    if party == "pl":
+        villagers_happy_requirement=55
+        industrial_bonus = 1.5
+        
+    if party == "pn":
+        villagers_happy_requirement=60
+        industrial_bonus = 1.1
+        
     for event in pygame.event.get():
 
     
@@ -374,7 +424,7 @@ while running:
             
             print("plus d argent")
             quit()
-        if villagers_happy < 50:
+        if villagers_happy < villagers_happy_requirement:
             
             print("plus content")
             NUM_WORK -= random.randint(villagers_happy , villagers_happy*2)
@@ -394,8 +444,8 @@ while running:
                     print(imposition)
                     imposition = 100 / imposition
                 
-                    village_money = village_money+((NUM_HOUSES//5) * imposition)//1
-                    villagers_happy = villagers_happy - ((3* (imposition*2))//1)
+                    village_money = ((village_money+((NUM_HOUSES//5) * imposition)*advantage)//1)
+                    villagers_happy = villagers_happy - ((((3* (imposition*2)))//advantage))
                 event_taxes=0
                 if malus > 0:
                     village_money -= malus
@@ -405,7 +455,7 @@ while running:
             if event_circus==5:
                 if electricity > 0:
                     villagers_happy += 2 * NUM_CIRCUS
-                    villagers_happy -= 5 * NUM_RAF
+                    villagers_happy -= (5 * NUM_RAF) * industrial_bonus
                     village_money += 15 * NUM_RAF
                 event_circus=0
                 #generation d electricité
@@ -446,8 +496,12 @@ while running:
     #screen.blit(population_text, (WIDTH - 200, HEIGHT - 160))
     screen.blit(factories_text, (WIDTH - 200, HEIGHT - 160))
     screen.blit(electricity_text, (WIDTH - 200, HEIGHT - 200))
+    
+    
     draw_notifications()
+    
     pygame.display.flip()
     window.update()
     clock.tick(60)
+
 pygame.quit()
