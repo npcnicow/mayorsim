@@ -35,9 +35,8 @@ electricity = 50
 max_electricity = 50
 industrial_bonus=1
 polution = True
-
-
-
+public_infrastructure=True
+public_infrastructure_bat = 0
 
 notifications = []
 
@@ -127,18 +126,55 @@ def draw_notifications():
 # -------------------------
 # INFOS BUILDINGS
 # -------------------------
-
+info_window = None  # ✅ IMPORTANT (tout en haut avec tes variables)
 def building_info():
+    global info_window
 
-    return
-    building_info = Toplevel(window)
-    Label(building_info, text=f"maisons/hlm: {NUM_HOUSES}").pack()
-    Label(building_info, text=f"factories: {NUM_FACTORIES}").pack()
-    Label(building_info, text=f"parcs: {NUM_PARC}").pack()
-    Label(building_info, text=f"cirques: {NUM_CIRCUS}").pack()
-    Label(building_info, text=f"rafineries: {NUM_RAF}").pack()
-    Label(building_info, text=f"banques: {NUM_BANK}").pack()
-    building_info.mainloop()
+    if info_window is not None and info_window.winfo_exists():
+        return
+
+    info_window = Toplevel(window)
+    info_window.title("Infos du village")
+    info_window.geometry("300x500")
+
+    # 🏠 Logement
+    Label(info_window, text="--- Logement ---").pack()
+    Label(info_window, text=f"Maisons + HLM : {NUM_HOUSES}").pack()
+
+    # 🏭 Industrie
+    
+    Label(info_window, text="--- Industrie ---").pack()
+    Label(info_window, text=f"Usines : {NUM_FACTORIES}").pack()
+    Label(info_window, text=f"Raffineries : {NUM_RAF}").pack()
+
+    # 🎪 Loisirs
+    
+    Label(info_window, text="--- Loisirs ---").pack()
+    Label(info_window, text=f"Cirques : {NUM_CIRCUS}").pack()
+    Label(info_window, text=f"Parcs : {NUM_PARC}").pack()
+
+    # 💰 Économie
+    Label(info_window, text="").pack()
+    Label(info_window, text="--- Économie ---").pack()
+    Label(info_window, text=f"Banques : {NUM_BANK}").pack()
+    Label(info_window, text=f"Argent : {village_money}").pack()
+
+    # 👷 Population
+    Label(info_window, text="").pack()
+    Label(info_window, text="--- Population ---").pack()
+    Label(info_window, text=f"Travailleurs : {NUM_WORK}").pack()
+    Label(info_window, text=f"Bonheur : {villagers_happy}").pack()
+
+    # ⚡ Énergie
+    Label(info_window, text="").pack()
+    Label(info_window, text="--- Énergie ---").pack()
+    Label(info_window, text=f"Générateurs : {NUM_GENERATOR}").pack()
+    Label(info_window, text=f"Electricité : {electricity}/{max_electricity}").pack()
+
+    # 🏛️ Politique
+    Label(info_window, text="").pack()
+    Label(info_window, text="--- Politique ---").pack()
+    Label(info_window, text=f"Parti actuel : {party}").pack()
 
 # -------------------------
 # ACHATS
@@ -179,16 +215,23 @@ def buy_hlm():
     add_notification("HLM construit")
 
 def buy_parc():
-    global NUM_PARC, village_money, villagers_happy
+    global NUM_PARC, village_money, villagers_happy,public_infrastructure_bat 
+
     if village_money < 70:
         add_notification("Pas assez d'argent")
         return
-    NUM_PARC += 1
-    villagers_happy += 4
-    village_money -= 70
-    factories.append(generate_building(*VILLAGE_CENTER, (68, 194, 106)))
-    add_notification("Parc construit")
-
+    if public_infrastructure== True:
+        NUM_PARC += 1
+        villagers_happy += 4
+        village_money -= 70
+        factories.append(generate_building(*VILLAGE_CENTER, (68, 194, 106)))
+        add_notification("Parc construit")
+        public_infrastructure_bat = public_infrastructure_bat+1
+    else:
+        add_notification("Tu ne peut pas construire d infrastructures publiques")
+    
+    
+    
 def buy_circus():
     global NUM_CIRCUS,village_money
     if village_money < 150:
@@ -268,21 +311,46 @@ def buy_capacitor():
     max_electricity = max_electricity + 50
     add_notification("Building construit")
 
-    
-
+def buy_school():
+    if village_money < 65:
+        add_notification("pas assez d'argent")
+        return
+    if public_infrastructure == True:
+        public_infrastructure_bat = public_infrastructure_bat+1
+        factories.append(generate_building(*VILLAGE_CENTER, (15, 15, 15)))
+    else:
+        add_notification("Tu ne peux pas contruire d infrastructures publiques")
 
 #fonction pour choisir son parti politique
 party = None
 def polp_chose():
-    global parti_actuel
-
+    global partiy
+    global village_money
     def set_parti(name):
-        global parti_actuel
+        global party
+        global village_money
+        global NUM_WORK
         party=name
+        if party == "pc":
+            village_money-=15
+        
+        if party == "ps":
+           village_money-=10
+        
+        if party == "pe":
+           village_money-=5
+        
+        if party == "pce":
+          pass
+    
+        if party == "pl":
+            NUM_WORK-=5
+ 
+        if party == "pn":
+            NUM_WORK-=10
 
     
-    
-    
+        
     polp_chose_window = Toplevel(window)  # 👈 IMPORTANT
     polp_chose_window.geometry("300x200")
     polp_chose_window.title("Politique")
@@ -375,7 +443,7 @@ running = True
 event_taxes=0
 event_circus=0
 event_bank=0
-
+event_elections=0
 
 #mettre la worforce
 i_workforce=0
@@ -410,15 +478,19 @@ while running:
         pass
     
     if party == "pl":
+        
         villagers_happy_requirement=55
         industrial_bonus = 1.5
-        
+        public_infrastructure = False
     if party == "pn":
+        
         villagers_happy_requirement=60
         industrial_bonus = 1.1
-        
+        public_infrastructure = False
+    
+    
     for event in pygame.event.get():
-
+        
     
         if village_money < 0:
             
@@ -436,6 +508,7 @@ while running:
             event_taxes+=1
             event_circus+=1
             event_bank+=1
+            event_elections=event_elections+1
             malus=(NUM_BANK*5+NUM_PARC*3 + NUM_RAF*3 + NUM_CIRCUS*3) +villagers_happy//10 +NUM_HOUSES//200
 
             if event_taxes==10:
@@ -475,14 +548,22 @@ while running:
                 village_money += random.randint(-20,20)*NUM_BANK
                 event_bank=0
 
+            if event_elections == 45:
+                add_notification("Les elections vont commencer dans 5 secondes")
+            if event_elections == 50:
+                #evenement des elections
+                #chacker si on peut avoir les votes
+                if villagers_happy_requirement < 50:
+                    votes =random.randint( 0 , villagers_happy_requirement)
+                    if votes < villagers_happy_requirement//2:
+                        #game over
+                        quit()
             village_money = factories_money(NUM_FACTORIES, NUM_HOUSES, village_money)
 
     
     screen.fill((0,0,0))  # fond
-
     # Afficher la map + bâtiments
     draw_map(pixel_map, textures + factories + houses)
-
     # Afficher texte
     money_text = font.render(f"$ : {village_money}", True, (255,255,255))
     happiness_text = font.render(f":) : {villagers_happy}", True, (255,255,255))
@@ -496,10 +577,7 @@ while running:
     #screen.blit(population_text, (WIDTH - 200, HEIGHT - 160))
     screen.blit(factories_text, (WIDTH - 200, HEIGHT - 160))
     screen.blit(electricity_text, (WIDTH - 200, HEIGHT - 200))
-    
-    
     draw_notifications()
-    
     pygame.display.flip()
     window.update()
     clock.tick(60)
