@@ -104,6 +104,8 @@ def draw_map(map_grid, buildings):
         rect = (x*PIXEL_SIZE, y*PIXEL_SIZE, PIXEL_SIZE, PIXEL_SIZE)
         pygame.draw.rect(screen, color, rect)
 
+
+
 # -------------------------
 # NOTIFICATIONS
 # -------------------------
@@ -429,7 +431,38 @@ while a_numelec !=NUM_GENERATOR:
     a_numelec=a_numelec+1
 
 
+#-----------------
+#aJOUT D EVENEMENTS ALEATOIRES
+#------------------
+def random_event(num):
+    
+    if num==1:
+        add_notification("Blackout total ⚡")
+        electricity = 0  
+    
+    if num==2:
+        add_notification("Ta ville devient célèbre 🌟")
+        villagers_happy += 20
+    
+    if num==3:
+        add_notification("Scandale politique 📰")
+        villagers_happy -= 15
 
+    if num ==4:
+        add_notification("Canicule extrême ☀️")
+        villagers_happy -= 5
+        
+    if num==5:
+        add_notification("Un festival de musique se passe dans ton village")
+        villagers_happy += 5
+    if num==6:
+        add_notification("Une maladie se propage 🤒")
+        NUM_WORK -= random.randint(10, 30)
+        
+    if num==7:
+        add_notification("De nouvelles personnes arrivent dans ton village")
+        NUM_WORK += random.randint(5,20)
+        
 # -------------------------
 # TIMER
 # -------------------------
@@ -444,7 +477,8 @@ event_taxes=0
 event_circus=0
 event_bank=0
 event_elections=0
-
+event_inflation=0
+event_random=0
 #mettre la worforce
 i_workforce=0
 while i_workforce != NUM_HOUSES:
@@ -456,7 +490,7 @@ while i_workforce != NUM_HOUSES:
 # -------------------------
 # GAME LOOP
 # -------------------------
-
+inflation = 1
 while running:
     villagers_happy_requirement=50
     advantage=1
@@ -496,11 +530,6 @@ while running:
             
             print("plus d argent")
             quit()
-        if villagers_happy < villagers_happy_requirement:
-            
-            print("plus content")
-            NUM_WORK -= random.randint(villagers_happy , villagers_happy*2)
-
         if event.type == pygame.QUIT:
             running = False
 
@@ -509,8 +538,9 @@ while running:
             event_circus+=1
             event_bank+=1
             event_elections=event_elections+1
+            event_inflation=event_inflation+1
+            event_random+=1
             malus=(NUM_BANK*5+NUM_PARC*3 + NUM_RAF*3 + NUM_CIRCUS*3) +villagers_happy//10 +NUM_HOUSES//200
-
             if event_taxes==10:
                 imposition = spin_value.get()
                 if imposition > 0:
@@ -532,7 +562,17 @@ while running:
                     village_money += 15 * NUM_RAF
                 event_circus=0
                 #generation d electricité
+                if villagers_happy < villagers_happy_requirement:
+                    NUM_WORK -= random.randint(5, 15)
+                    add_notification("Des habitants quittent la ville")
+                if villagers_happy > 70:
+                    NUM_HOUSES += random.randint(1,3)
                 
+                jobs = NUM_FACTORIES * 5 + NUM_BANK * 3
+                unemployed = max(0, NUM_WORK - jobs)
+                if unemployed > 20:
+                    villagers_happy -= 2
+
                 
                 temp_electricity = electricity + NUM_GENERATOR * 5
                 electricity_debt = int((NUM_FACTORIES * 1.5 + NUM_RAF * 2.5 + NUM_CIRCUS*2)//1)
@@ -548,9 +588,24 @@ while running:
                 village_money += random.randint(-20,20)*NUM_BANK
                 event_bank=0
 
-            if event_elections == 45:
-                add_notification("Les elections vont commencer dans 5 secondes")
-            if event_elections == 50:
+            if event_inflation==60:
+                add_notification("L'inflation touche ton pays attention")
+                
+                village_money = (village_money * inflation)
+                if (inflation - 0.5) == 0.4:
+                    pass
+                else:
+                    inflation=inflation - 0.5
+                
+                event_inflation=0
+            
+            if event_random == 100:
+                #il faut ajouter des evenements aleatoires
+                random_event_num=random.randint(0,10)
+                random_event(random_event_num)
+            if event_elections == 110:
+                add_notification("Les elections vont commencer dans 10 secondes")
+            if event_elections == 120:
                 #evenement des elections
                 #chacker si on peut avoir les votes
                 if villagers_happy_requirement < 50:
@@ -558,9 +613,9 @@ while running:
                     if votes < villagers_happy_requirement//2:
                         #game over
                         quit()
+                event_elections=0      
+            
             village_money = factories_money(NUM_FACTORIES, NUM_HOUSES, village_money)
-
-    
     screen.fill((0,0,0))  # fond
     # Afficher la map + bâtiments
     draw_map(pixel_map, textures + factories + houses)
